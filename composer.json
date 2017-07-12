@@ -1,0 +1,39 @@
+{
+    "name": "despark/laravel-db-localization",
+    "description": "Database localization package for laravel framework",
+    "keywords": ["framework", "laravel", "despark", "localization", "database"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ludmil Simeonov",
+            "email": "lsimeonov@despark.com"
+        },
+        {
+            "name": "Anton Geshev",
+            "email": "ageshev@despark.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0",
+        "illuminate/support": "5.4.*",
+        "illuminate/routing": "5.4.*",
+        "illuminate/database": "5.4.*"
+    },
+    "require-dev": {
+        "mockery/mockery": "0.9.*",
+        "phpunit/phpunit": "~5.7",
+        "graham-campbell/testbench": "^3.2",
+        "orchestra/database": "v3.4.0-BETA1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Despark\\LaravelDbLocalization\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Despark\\Tests\\LaravelDbLocalization\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable"
+}
