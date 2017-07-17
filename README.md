@@ -14,6 +14,8 @@ Require using [Composer](https://getcomposer.org)
 composer require despark/laravel-db-i18n
 ```
 
+#### Note: [despark/igni-core](https://github.com/despark/igni-core) comes out of the box with this module.
+
 ## Example usage
 > config/ignicms.php
 ```php
