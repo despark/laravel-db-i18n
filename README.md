@@ -14,8 +14,6 @@ Require using [Composer](https://getcomposer.org)
 composer require despark/laravel-db-i18n
 ```
 
-A new Contacts Management sidebar will be added to the CMS page
-
 ## Example usage
 > config/ignicms.php
 ```php
