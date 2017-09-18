@@ -1,132 +1,189 @@
-# Laravel DB Localization for version 5.1
+<p align="center"><img src="https://despark.com/public/images/despark-logo.svg"></p>
 
-*Note: if you are looking for the version for Laravel 4.2 check out [v1 branch](https://github.com/despark/laravel-db-localization/tree/v1).*
+<p align="center">
+<a href="https://packagist.org/packages/despark/laravel-db-i18n"><img src="https://poser.pugx.org/despark/laravel-db-i18n/v/stable.svg" alt="Latest Stable Version"></a>
+</p>
+
+# Despark's igniCMS DB Localization Module
+## About
+This package extends [despark/igni-core](https://github.com/despark/igni-core) by adding a fully functional DB Localization Module.
 
 ## Installation
-
-Open `composer.json` file of your project and add the following to the require array:
-```json
-"despark/laravel-db-localization": "2.0.*"
+Require using [Composer](https://getcomposer.org)
+```bash
+composer require despark/laravel-db-i18n
 ```
 
-Now run `composer update` to install the new requirement.
+#### Note: [despark/igni-core](https://github.com/despark/igni-core) comes out of the box with this module.
 
-Once it's installed, you need to register the service provider in `config/app.php` in the providers array:
+## Example usage
+> config/ignicms.php
 ```php
-'providers' => array(
-  ...
-  Despark\LaravelDbLocalization\LaravelDbLocalizationServiceProvider::class,
-);
-```
+   ...
+    'languages' => [
+        // Add languages that you will use in your app.
+        [
+            'locale' => 'en',
+            'name' => 'English',
+        ],
+        [
+            'locale' => 'de',
+            'name' => 'Deutsche',
+        ],
+        [
+            'locale' => 'fr',
+            'name' => 'Français',
+        ],
+    ],
+   ...
+  ```
+> database/migrations/create_articles_table.php
 
-Publish config file:
-`php artisan vendor:publish --provider="Despark\LaravelDbLocalization\LaravelDbLocalizationServiceProvider" --tag="config"`
+  ```php
+   ...
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */    
+    public function up()
+    {
+        Schema::create('articles', function (Blueprint $table) {
+            $table->increments('id');
+            $table->string('url');
+            $table->timestamps();
+        });
+    }
 
-Publish migrations:
-`php artisan vendor:publish --provider="Despark\LaravelDbLocalization\LaravelDbLocalizationServiceProvider" --tag="migrations"`
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('articles');
+    }
+   ...
+  ```
+> database/migrations/create_articles_i18n_table.php
 
-# How to use it
+  ```php
+   ...
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */    
+    public function up()
+    {
+        Schema::create('articles_i18n', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('parent_id');
+            $table->string('locale');
+            $table->string('title');
+            $table->text('content')->nullable();
+            $table->timestamps();
 
+            $table->foreign('parent_id')
+                   ->references('id')
+                   ->on('articles')
+                   ->onDelete('cascade')
+                   ->onUpdate('cascade');
+        });
+    }
 
-## Database Example
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('articles_i18n');
+    }
+   ...
+  ```
+> App\Models\Article.php
 
-- First you need to create your languages table
+  ```php
+   ...    
+    use Despark\Cms\Models\AdminModel;
+    use Despark\LaravelDbLocalization\Contracts\Translatable;
+    use Despark\LaravelDbLocalization\Traits\HasTranslation;
 
+    class Article extends AdminModel implements Translatable
+    {
+        use HasTranslation;
+
+        protected $table = 'articles';
+
+        protected $translatable = [
+            'title',
+            'content',
+        ];
+
+        protected $fillable = [
+            'title',
+            'content',
+            'url',
+        ];
+
+        protected $rules = [
+            'title' => 'required',
+            'content' => 'required',
+            'url' => 'required',
+        ];
+
+        protected $identifier = 'articles';
+     }
+   ...
+  ```
+
+> App\Http\Controllers\Admin\ArticlesController.php
+
+   ```php
+   ...    
+    use Despark\Cms\Http\Controllers\AdminController;
+
+    class ArticlesController extends AdminController
+    {
+    }
+   ...
+  ```
+> config\entities\articles.php
 ```php
-Schema::create('i18n', function (Blueprint $table) {
-        $table->increments('id');
-        $table->string('locale')->unique()->index();
-        $table->string('name')->index();
-        $table->timestamps();
-});
-```
-- Example of translatable table
-
-```php
-Schema::create('contacts', function (Blueprint $table) {
-        $table->increments('id');
-
-        // untranslatable columns
-        $table->string('fax');
-        $table->string('phone');
-        $table->timestamps();
-});
-```
-- Example of translations table
-
-```php
-Schema::create('contacts_i18n', function (Blueprint $table) {
-
-        $table->integer('contact_id')->unsigned();
-        $table->foreign('contact_id')->references('id')->on('contacts')->onDelete('cascade');
-        $table->integer('i18n_id')->unsigned();
-        $table->foreign('i18n_id')->references('id')->on('i18n')->onDelete('cascade');
-
-        // translatable columns
-        $table->string('name', 100);
-        $table->string('location', 100);
-
-        $table->unique(['contact_id', 'i18n_id']);
-        $table->primary(['contact_id', 'i18n_id']);
-        $table->timestamps();
-});
-```
-## Model Example
-```php
-
-use Despark\LaravelDbLocalization\i18nModelTrait;
-
-class Contacts extends Eloquent
-{
-    use i18nModelTrait; // You must use i18nModelTrait
-
-    protected $fillable = [
-        'fax',
-        'phone',
+   return [
+        'name' => 'Articles',
+        'description' => 'Articles resource',
+        'model' => App\Models\Article::class,
+        'controller' => App\Http\Controllers\Admin\ArticlesController::class,
+        'adminColumns' => [
+            'title' => 'translation.title',
+            'created at' => 'created_at',
+        ],
+        'actions' => ['edit', 'create', 'destroy'],
+        'adminFormFields' => [
+            'title' => [
+                'type' => 'text',
+                'label' => 'Title',
+            ],
+            'content' => [
+                'type' => 'textarea',
+                'label' => 'Content',
+            ],
+            'url' => [
+                'type' => 'text',
+                'label' => 'Url',
+            ],
+        ],
+        'adminMenu' => [
+            'articles' => [
+                'name' => 'Articles',
+                'iconClass' => 'fa-newspaper-o',
+                'link' => 'articles.index',
+            ],
+        ],
     ];
-
-    protected $translator = 'Despark\LaravelDbLocalization\ContactsI18n'; // Here you need to add your translations table model name
-
-    protected $translatorField = 'contact_id'; // your translator field name
-
-    protected $localeField = 'i18n_id'; // here is your locale field name
-
-    protected $translatedAttributes = ['contact_id', 'i18n_id', 'name', 'location']; // translatable fillables
-}
-
-class ContactsI18n extends Eloquent
-{
-    protected $table = 'contacts_i18n';
-}
-```
-## View example
-
-Create
-```php
-{!! Form::text("fax", null) !!}
-{!! Form::text("phone", null) !!}
-
-@foreach($languages as $language)
-    {!! Form::text("name[name_$language->id]", null) !!}  // Follow this convention array( fieldname_languageId );
-    {!! Form::text("location[location_$language->id]", null) !!}
-@endforeach
-```
-Retrieve
-```php
-    // locale string
-    $contacts->translate('en'); // all fields
-    $contacts->translate('en')->location; // specific field
-
-    // locale id
-    $i18nId = 2;
-    $contacts->translate($i18nId); // all fields
-    $contacts->translate($i18nId)->location; // specific field
-```
-
-## Config Example
-```php
-config/laravel-db-localization.php
-    'locale_class' => 'Despark\LaravelDbLocalization\I18n', // Eloquent model that handles your languages.
-```
-
+  ```
 
